@@ -38,29 +38,25 @@ pipeline {
              }
            }
          }
-      }
-
-   stages {
-            stage('push to dockerhub') {
-              steps {
-                script {
-                  withCredentials([usernamePassword(credentialsId: 'dockerhub-credential-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')])
-                  {
-                    sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
-                    def image = docker.image("${DOCKER_IMAGE}")
-                    image.push()
-                  }
-                }
+        stage('push to dockerhub') {
+          steps {
+            script {
+              withCredentials([usernamePassword(credentialsId: 'dockerhub-credential-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')])
+              {
+                sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+                def image = docker.image("${DOCKER_IMAGE}")
+                image.push()
               }
             }
-         }
+          }
+        }
 
-         post {
-                 success {
-                     echo "Pipeline completed successfully!"
-                 }
-                 failure {
-                     echo "Pipeline failed."
-                 }
+     post {
+             success {
+                 echo "Pipeline completed successfully!"
              }
+             failure {
+                 echo "Pipeline failed."
+             }
+         }
 }
