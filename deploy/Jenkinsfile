@@ -1,0 +1,66 @@
+pipeline {
+   agent any
+   environment {
+      GIT_REPO_URL = 'https://github.com/Md-Ahatasham/laravel-pos-application.git'
+      GIT_REPO_NAME = GIT_REPO_URL.split('/').last().replace('.git', '') // Extract the repository name from the URL
+      GIT_BRANCH_NAME = 'master'
+      DOCKERHUB_CREDENTIALS = 'dockerhub-credential-id'
+      DOCKERHUB_USERNAME = 'ahatashamcsecu'
+   }
+
+   parameters {
+     string(name: 'BRANCH', defaultValue: "${GIT_BRANCH_NAME}", description: 'Branch to build')
+   }
+
+   stages {
+      stage('checkout') {
+        steps {
+          // checkout from specific branch
+          script {
+            checkout scm: [$class: 'GitSCM', branches: [[name: "*/${params.BRANCH}"]], userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]]
+          }
+        }
+      }
+   }
+
+   stages {
+         stage('build image') {
+           steps {
+             // checkout from specific branch
+             script {
+               def commitHash = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+
+               def imageTag = "${env.BUILD_NUMBER}"
+               def dockerImage = "${DOCKERHUB_USERNAME}/${GIT_REPO_NAME}: ${imageTag}"
+               def image = docker.build("${DOCKER_HUB_USERNAME}/${GIT_REPO_NAME}:${imageTag}", "-F ./codes/Dockerfile .")
+               env.IMAGE_TAG = imageTag
+               env.DOCKER_IMAGE = image
+             }
+           }
+         }
+      }
+
+   stages {
+            stage('push to dockerhub') {
+              steps {
+                script {
+                  withCredentials([usernamePassword(credentialsId: 'dockerhub-credential-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')])
+                  {
+                    sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+                    def image = docker.image("${DOCKER_IMAGE}")
+                    image.push()
+                  }
+                }
+              }
+            }
+         }
+
+         post {
+                 success {
+                     echo "Pipeline completed successfully!"
+                 }
+                 failure {
+                     echo "Pipeline failed."
+                 }
+             }
+}
