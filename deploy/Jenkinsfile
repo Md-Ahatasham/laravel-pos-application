@@ -21,9 +21,6 @@ pipeline {
           }
         }
       }
-   }
-
-   stages {
          stage('build image') {
            steps {
              // checkout from specific branch
