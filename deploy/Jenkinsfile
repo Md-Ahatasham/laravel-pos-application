@@ -9,7 +9,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'BRANCH', defaultValue: 'master', description: 'Branch to build') // Use static default value for branch
+        choices (name: 'BRANCH', defaultValue: 'dev', choices: ['dev', 'staging', 'master'], description: 'Choose a branch to deploy')
     }
 
     stages {
