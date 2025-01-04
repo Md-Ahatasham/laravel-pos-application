@@ -18,6 +18,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 
 COPY . /app
 
+# Set correct permissions
+RUN chown -R www-data:www-data /app
+
 RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader
 
 # Give execute permission to startup script
