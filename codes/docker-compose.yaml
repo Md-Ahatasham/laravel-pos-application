@@ -1,0 +1,42 @@
+services:
+  web:
+    image: triangle-pos:latest
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "8099:8000"
+    volumes:
+      - .:/var/www/html
+    networks:
+      - laravel
+      - dockerized_laravel_laravel
+
+#  db:
+#    platform: "linux/amd64"
+#    image: mysql:latest
+#    env_file:
+#      - .env
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: ${DB_DATABASE}
+#      MYSQL_USER: ${DB_USERNAME}
+#      MYSQL_PASSWORD: ${DB_PASSWORD}
+#    ports:
+#      - "33060:3306"
+#    volumes:
+#      - dbdata:/var/lib/mysql
+#
+#volumes:
+#  dbdata:
+
+networks:
+  laravel:
+    name: laravel
+    external: true
+  dockerized_laravel_laravel:
+      name: dockerized_laravel_laravel
+      external: true
+
+
