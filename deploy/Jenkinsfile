@@ -93,7 +93,7 @@ pipeline {
                     echo "Deploying to ${env.SINGLE_SERVER}"
 
                     // SSH into the server and deploy the image
-                    sshagent(['sham']) {
+                    sshagent(['ssh-credential-key']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${env.DEPLOYMENT_USER}@${env.SINGLE_SERVER} << EOF
                         docker pull ${DOCKER_IMAGE}
