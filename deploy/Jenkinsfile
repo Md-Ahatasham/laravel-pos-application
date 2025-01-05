@@ -95,10 +95,10 @@ pipeline {
                     // SSH into the server and deploy the image
                     sshagent(['ssh-credential-key']) {
                         sh """
-                        ssh -o StrictHostKeyChecking=no ${env.DEPLOYMENT_USER}@${env.SINGLE_SERVER} << EOF
-                        docker pull ${DOCKER_IMAGE}
+                        ssh -o StrictHostKeyChecking=no ${env.DEPLOYMENT_USER}@${env.SINGLE_SERVER} '
+                        docker pull ${DOCKER_IMAGE} &&
                         docker run -d --name laravel-pos -p 9079:8000 ${DOCKER_IMAGE}
-                        EOF
+                        '
                         """
                     }
                }
