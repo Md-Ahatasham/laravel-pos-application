@@ -9,7 +9,7 @@ pipeline {
     }
 
     parameters {
-        choices (name: 'BRANCH', choices: ['dev', 'staging', 'master'], description: 'Choose a branch to deploy')
+        choice (name: 'BRANCH', choices: ['dev', 'staging', 'master'], description: 'Choose a branch to deploy')
     }
 
     stages {
@@ -37,12 +37,11 @@ pipeline {
             steps {
                 script {
                     def commitHash = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                    def imageTag = "${env.BUILD_NUMBER}-${commitHash}"
+                    def imageTag = "${env.BUILD_NUMBER}"
                     def dockerImage = "${env.DOCKERHUB_USERNAME}/${env.GIT_REPO_NAME}:${imageTag}"
 
                     // Build the Docker image
-                    //sh "docker build -t ${dockerImage} -f ./codes/Dockerfile ./codes"
-                    def image = docker.build("${env.DOCKERHUB_USERNAME}/${env.GIT_REPO_NAME}:${imageTag}", "-f ./codes/Dockerfile .")
+                    sh "docker build -t ${dockerImage} -f ./codes/Dockerfile ./codes"
 
                     // Store the image tag and name as environment variables
                     env.IMAGE_TAG = imageTag
@@ -54,11 +53,14 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${env.DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
-                        sh """
-                            echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin
-                            docker push ${env.DOCKER_IMAGE}
-                        """
+                   withCredentials([usernamePassword(credentialsId: 'dockerhub-credential-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+                        // Log in to Docker Hub using the credentials
+                        sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+
+                        // Push the Docker image to Docker Hub
+                        def image = docker.image("${DOCKER_IMAGE}")
+                        image.push()
+
                     }
                 }
             }
@@ -67,7 +69,7 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline completed successfully! Image: ${env.DOCKER_IMAGE}"
+            echo "Pipeline completed successfully!"
         }
         failure {
             echo "Pipeline failed."
