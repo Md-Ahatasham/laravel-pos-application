@@ -6,24 +6,27 @@ pipeline {
         GIT_BRANCH_NAME = 'master'
         DOCKERHUB_CREDENTIALS = 'dockerhub-credential-id'
         DOCKERHUB_USERNAME = 'ahatashamcsecu'
+        DEPLOYMENT_USER = 'sham'
+        SINGLE_SERVER = '192.168.255.78'
     }
 
     parameters {
         choice (name: 'BRANCH', choices: ['dev', 'staging', 'master'], description: 'Choose a branch to deploy')
+        choice (name: 'DEPLOYMENT_TARGET', choices: ['single', 'multiple'], description: 'Choose a server to deploy')
     }
 
     stages {
 
-        stage('Check Docker') {
-            steps {
-                script {
-                    sh 'docker --version'
-                }
-            }
-        }
         stage('Checkout Code') {
             steps {
                 script {
+
+                   // define allowed branch
+                   def allowedBranches = ['dev','staging','master']
+                   // check selected branch is in the list or not
+                   if(!allowedBranches.contains(params.BRANCH)){
+                     error "Invalid branch selection: ${params.BRANCH}"
+                   }
                     checkout([
                         $class: 'GitSCM',
 //                         branches: [[name: "*/${params.BRANCH}"]],  // if use from within jenkins directly
@@ -66,6 +69,22 @@ pipeline {
                 }
             }
         }
+
+        stage ('Deploy to server') {
+           steps {
+             script {
+             if (params.DEPLOYMENT_TARGET == 'single') {
+               echo "Deploying to single server: ${env.SINGLE_SERVER}"
+                   sh """
+                       ssh ${env.DEPLOYMENT_USER}@${env.SINGLE_SERVER} '
+                           docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASS} &&
+                           docker pull ${DOCKER_IMAGE}:${env.IMAGE_TAG}
+                       '
+                   """
+               }
+             }
+           }
+         }
     }
 
     post {
