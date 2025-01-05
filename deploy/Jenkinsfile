@@ -75,20 +75,31 @@ pipeline {
              script {
              if (params.DEPLOYMENT_TARGET == 'single') {
 
-             withCredentials([usernamePassword(credentialsId: 'dockerhub-credential-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
-                     // Log in to Docker Hub using the credentials
-                     //sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+//              withCredentials([usernamePassword(credentialsId: 'dockerhub-credential-id', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')]) {
+//                      // Log in to Docker Hub using the credentials
+//                      //sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
+//
+//                     echo "Deploying to single server: ${env.SINGLE_SERVER}"
+//                        sh """
+//                            ssh -o StrictHostKeyChecking=no ${env.DEPLOYMENT_USER}@${env.SINGLE_SERVER} '
+//                                docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASS} &&
+//                                docker pull ${DOCKER_IMAGE}
+//                            '
+//                        """
+//
+//                  }
 
-                    echo "Deploying to single server: ${env.SINGLE_SERVER}"
-                       sh """
-                           ssh -o StrictHostKeyChecking=no ${env.DEPLOYMENT_USER}@${env.SINGLE_SERVER} '
-                               docker login -u ${DOCKER_HUB_USER} -p ${DOCKER_HUB_PASS} &&
-                               docker pull ${DOCKER_IMAGE}
-                           '
-                       """
 
-                 }
+                    echo "Deploying to ${env.SINGLE_SERVER}"
 
+                    // SSH into the server and deploy the image
+                    sshagent([ssh-credential-key]) {
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ${env.SINGLE_SERVER} << EOF
+                        docker pull ${DOCKER_IMAGE}
+                        EOF
+                        """
+                    }
                }
              }
            }
